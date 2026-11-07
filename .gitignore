@@ -7,3 +7,10 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+# 构建产物与签名文件
+*.apk
+*.aab
+*.idsig
+*.jks
+*.keystore
+output/
