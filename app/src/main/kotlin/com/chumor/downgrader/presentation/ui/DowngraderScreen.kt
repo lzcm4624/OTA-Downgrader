@@ -42,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -72,12 +73,14 @@ import com.chumor.downgrader.presentation.ui.glass.GlassErrorNote
 import com.chumor.downgrader.presentation.ui.glass.GlassProgress
 import com.chumor.downgrader.presentation.ui.glass.GlassTheme
 import com.chumor.downgrader.presentation.ui.glass.IndeterminateBar
+import com.chumor.downgrader.presentation.ui.glass.LocalLiquidPhase
 import com.chumor.downgrader.presentation.ui.glass.SectionLabel
 import com.chumor.downgrader.presentation.ui.glass.SkeletonLines
 import com.chumor.downgrader.presentation.ui.glass.SmallGlassButton
 import com.chumor.downgrader.presentation.ui.glass.Spinner
 import com.chumor.downgrader.presentation.ui.glass.Text
 import com.chumor.downgrader.presentation.ui.glass.StatusPill
+import com.chumor.downgrader.presentation.ui.glass.liquidGlassEdge
 import com.chumor.downgrader.presentation.ui.glass.revealItem
 import java.util.Locale
 
@@ -148,8 +151,6 @@ fun DowngraderScreen(
                     revealItem(key = "header", order = 0, replayKey = motionKey) {
                         Header(
                             busy = busy,
-                            channel = state.channel,
-                            channelAuto = state.isChannelAuto,
                             onAbout = { showAbout = true },
                         )
                     }
@@ -303,7 +304,7 @@ private fun MiniTopBar(
             .padding(top = 10.dp, bottom = if (busy) 0.dp else 11.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("降级助手", style = Glass.headline(15f, p.text, FontWeight.Bold))
+            Text("OTA降级工具", style = Glass.headline(15f, p.text, FontWeight.Bold))
             Spacer(Modifier.width(9.dp))
             Text(channel.label, style = Glass.label(11.5f, p.accent, FontWeight.SemiBold))
             Spacer(Modifier.weight(1f))
@@ -414,8 +415,6 @@ private fun channelHint(channel: FirmwareChannel): String = when (channel) {
 @Composable
 private fun Header(
     busy: Boolean,
-    channel: FirmwareChannel,
-    channelAuto: Boolean,
     onAbout: () -> Unit,
 ) {
     val p = Glass.palette
@@ -425,19 +424,14 @@ private fun Header(
             .padding(start = 6.dp, end = 2.dp, top = 10.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "降级助手",
-                style = Glass.title(30f, p.text, FontWeight.Bold),
-                maxLines = 1,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "${channel.label} 通道 · ${if (channelAuto) "机型自动识别" else "手动指定"} · 查询 · 下载 · 校验",
-                style = Glass.label(12.5f, p.textMute, FontWeight.Medium),
-                maxLines = 1,
-            )
-        }
+        Text(
+            text = "OTA降级工具",
+            style = Glass.title(27f, p.text, FontWeight.Bold),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(10.dp))
         StatusPill(text = if (busy) "处理中" else "就绪", active = !busy)
         Spacer(Modifier.width(8.dp))
         AboutButton(onClick = onAbout)
@@ -448,11 +442,19 @@ private fun Header(
 private fun AboutButton(onClick: () -> Unit) {
     val p = Glass.palette
     val interaction = remember { MutableInteractionSource() }
+    val phase = LocalLiquidPhase.current
     Box(
         modifier = Modifier
             .size(38.dp)
-            .background(p.glassTint, CircleShape)
-            .border(1.dp, p.edgeTop.copy(alpha = 0.42f), CircleShape)
+            .clip(CircleShape)
+            .background(p.glassTint)
+            .liquidGlassEdge(
+                cornerRadius = 19.dp,
+                palette = p,
+                phase = phase,
+                width = 1.3.dp,
+                glow = false,
+            )
             .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -529,8 +531,11 @@ private fun DeviceRows(device: DeviceInfo) {
         value = device.softwareVersion.asDisplayValue(),
         valueStyle = Glass.body(14f, p.accent, FontWeight.SemiBold),
     )
-    DataRow(label = "Android 版本", value = device.androidVersion.asDisplayValue())
-    DataRow(label = "序列号", value = device.serial.asMaskedSerial(), showDivider = false)
+    DataRow(
+        label = "Android 版本",
+        value = device.androidVersion.asDisplayValue(),
+        showDivider = false,
+    )
 }
 
 @Composable
@@ -875,15 +880,6 @@ private fun downloadStatusText(status: FirmwareDownloadStatus): String = when (s
 
 private fun String?.asDisplayValue(): String =
     this?.takeIf(String::isNotBlank) ?: "—"
-
-private fun String?.asMaskedSerial(): String {
-    val serial = this?.takeIf(String::isNotBlank) ?: return "—"
-    return if (serial.length <= 4) {
-        "••••"
-    } else {
-        "•".repeat(serial.length - 4) + serial.takeLast(4)
-    }
-}
 
 private fun formatFileSize(bytes: Long): String {
     if (bytes <= 0L) return "—"

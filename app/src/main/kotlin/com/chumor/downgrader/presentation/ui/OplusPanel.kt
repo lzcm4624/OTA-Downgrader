@@ -50,7 +50,9 @@ import com.chumor.downgrader.presentation.ui.glass.Glass
 import com.chumor.downgrader.presentation.ui.glass.GlassButton
 import com.chumor.downgrader.presentation.ui.glass.GlassCard
 import com.chumor.downgrader.presentation.ui.glass.GlassErrorNote
+import com.chumor.downgrader.presentation.ui.glass.LocalLiquidPhase
 import com.chumor.downgrader.presentation.ui.glass.SectionLabel
+import com.chumor.downgrader.presentation.ui.glass.liquidGlassEdge
 import com.chumor.downgrader.presentation.ui.glass.SmallGlassButton
 import com.chumor.downgrader.presentation.ui.glass.Spinner
 import com.chumor.downgrader.presentation.ui.glass.StatusPill
@@ -67,6 +69,7 @@ fun ChannelSwitcher(
 ) {
     val p = Glass.palette
     val channels = FirmwareChannel.entries
+    val phase = LocalLiquidPhase.current
     val selectedIndex = channels.indexOf(current).coerceAtLeast(0)
     val dragAccumulator = remember { floatArrayOf(0f) }
 
@@ -75,7 +78,12 @@ fun ChannelSwitcher(
             .fillMaxWidth()
             .clip(CircleShape)
             .background(if (p.dark) Color(0x1FFFFFFF) else Color(0x0F000000))
-            .border(0.8.dp, p.hairline, CircleShape)
+            .liquidGlassEdge(
+                cornerRadius = 24.dp,
+                palette = p,
+                phase = phase,
+                width = 1.3.dp,
+            )
             .padding(4.dp)
             .pointerInput(selectedIndex) {
                 detectHorizontalDragGestures(
@@ -109,7 +117,14 @@ fun ChannelSwitcher(
                 .height(40.dp)
                 .clip(CircleShape)
                 .background(p.accent.copy(alpha = if (p.dark) 0.26f else 0.16f))
-                .border(0.9.dp, p.accent.copy(alpha = 0.45f), CircleShape),
+                .liquidGlassEdge(
+                    cornerRadius = 20.dp,
+                    palette = p,
+                    phase = phase,
+                    width = 1.3.dp,
+                    glow = false,
+                    strength = 0.9f,
+                ),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -321,12 +336,19 @@ private fun ModelInputField(
     onValueChange: (String) -> Unit,
 ) {
     val p = Glass.palette
+    val phase = LocalLiquidPhase.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(if (p.dark) Color(0x1AFFFFFF) else Color(0x0D000000))
-            .border(0.8.dp, p.hairline, RoundedCornerShape(16.dp))
+            .liquidGlassEdge(
+                cornerRadius = 16.dp,
+                palette = p,
+                phase = phase,
+                width = 1.3.dp,
+                glow = false,
+            )
             .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         if (value.isEmpty()) {

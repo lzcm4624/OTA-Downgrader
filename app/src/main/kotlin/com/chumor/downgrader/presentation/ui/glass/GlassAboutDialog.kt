@@ -44,7 +44,7 @@ fun GlassAboutDialog(show: Boolean, onDismissRequest: () -> Unit) {
                 .padding(horizontal = 26.dp),
         ) {
             GlassCard(
-                shape = RoundedCornerShape(30.dp),
+                cornerRadius = 30.dp,
                 contentPadding = PaddingValues(horizontal = 22.dp, vertical = 22.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -62,8 +62,8 @@ fun GlassAboutDialog(show: Boolean, onDismissRequest: () -> Unit) {
                     }
                     Spacer(Modifier.width(13.dp))
                     Column {
-                        Text("降级助手", style = Glass.headline(18f, p.text, FontWeight.Bold))
-                        Text("vivo 系统降级查询", style = Glass.label(12f, p.textMute))
+                        Text("OTA降级工具", style = Glass.headline(18f, p.text, FontWeight.Bold))
+                        Text("vivo · 欧加真 系统降级查询", style = Glass.label(12f, p.textMute))
                     }
                 }
 

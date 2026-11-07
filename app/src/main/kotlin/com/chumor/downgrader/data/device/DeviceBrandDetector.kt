@@ -45,7 +45,13 @@ class DeviceBrandDetector {
         val hasOplusProps = properties.keys.any { key ->
             key.startsWith("ro.build.version.oplusrom") ||
                 key.startsWith("ro.build.version.opporom") ||
-                key.startsWith("ro.build.version.realmeui")
+                key.startsWith("ro.build.version.realmeui") ||
+                key.startsWith("ro.oppo.") ||
+                key.startsWith("ro.oplus.") ||
+                key.startsWith("ro.oneplus.") ||
+                key.startsWith("ro.realme.") ||
+                key.startsWith("ro.vendor.oplus.") ||
+                key.startsWith("ro.vendor.oppo.")
         }
 
         val brandLower = brand.lowercase()
