@@ -42,7 +42,7 @@
 需要 **JDK 21** 与 **Android SDK 37**（platform 37、build-tools 37.0.0）：
 
 ```bash
-git clone https://github.com/<你的用户名>/OTA-Downgrader.git
+git clone https://github.com/lzcm4624/OTA-Downgrader.git
 cd OTA-Downgrader
 export ANDROID_HOME=/path/to/android-sdk
 ./gradlew assembleRelease

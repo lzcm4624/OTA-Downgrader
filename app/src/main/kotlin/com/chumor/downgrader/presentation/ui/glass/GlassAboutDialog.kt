@@ -29,7 +29,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.chumor.downgrader.BuildConfig
 
-private const val SOURCE_URL = "https://github.com/Chumor/Downgrader"
+private const val SOURCE_URL = "https://github.com/lzcm4624/OTA-Downgrader"
 
 @Composable
 fun GlassAboutDialog(show: Boolean, onDismissRequest: () -> Unit) {
@@ -95,6 +95,7 @@ fun GlassAboutDialog(show: Boolean, onDismissRequest: () -> Unit) {
                 DataRow(label = "数据来源", value = "厂商官方公开接口")
                 DataRow(label = "完整性校验", value = "SHA-256")
                 DataRow(label = "开源协议", value = "GPL-3.0")
+                DataRow(label = "本项目", value = "github.com/lzcm4624")
                 DataRow(label = "原项目", value = "github.com/Chumor", showDivider = false)
 
                 Spacer(Modifier.height(20.dp))
