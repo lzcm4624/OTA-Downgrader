@@ -16,10 +16,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -33,37 +30,35 @@ import kotlinx.coroutines.delay
 
 /**
  * 卡片入场：淡入 + 上移 + 轻微放大。
- * LazyColumn 里滑到哪里、哪一项就播一次；切换通道时整块重新入场。
+ *
+ * 每次进入组合都会播一次（滑出屏幕再滑回来、切换通道、重新查询后刷出新结果都算），
+ * 所以这里刻意不用 rememberSaveable —— 那会把「已播放」记进快照，
+ * 导致只有第一次进页面有动画，后面全是干巴巴直接出现。
  */
 @Composable
 fun Reveal(
     modifier: Modifier = Modifier,
     order: Int = 0,
-    play: Boolean = true,
+    replayKey: Any? = Unit,
+    durationMillis: Int = 420,
     content: @Composable () -> Unit,
 ) {
-    var played by rememberSaveable { mutableStateOf(!play) }
-    val progress = remember { Animatable(if (played) 1f else 0f) }
-    LaunchedEffect(play) {
-        if (played || !play) {
-            progress.snapTo(1f)
-            return@LaunchedEffect
-        }
+    val progress = remember(replayKey) { Animatable(0f) }
+    LaunchedEffect(replayKey) {
         progress.snapTo(0f)
-        val stagger = order.coerceIn(0, 8) * 42L
+        val stagger = order.coerceIn(0, 8) * 34L
         if (stagger > 0L) delay(stagger)
         progress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
+            animationSpec = tween(durationMillis = durationMillis, easing = FastOutSlowInEasing),
         )
-        played = true
     }
     Box(
         modifier = modifier.graphicsLayer {
             val value = progress.value
             alpha = value
-            translationY = (1f - value) * 24.dp.toPx()
-            val scale = 0.985f + 0.015f * value
+            translationY = (1f - value) * 26.dp.toPx()
+            val scale = 0.982f + 0.018f * value
             scaleX = scale
             scaleY = scale
         },
@@ -75,11 +70,11 @@ fun Reveal(
 fun LazyListScope.revealItem(
     key: Any,
     order: Int = 0,
-    play: Boolean = true,
+    replayKey: Any? = Unit,
     content: @Composable () -> Unit,
 ) {
     item(key = key) {
-        Reveal(order = order, play = play, content = content)
+        Reveal(order = order, replayKey = replayKey, content = content)
     }
 }
 

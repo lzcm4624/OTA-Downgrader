@@ -87,6 +87,7 @@ private val ContentMaxWidth = 760.dp
 fun DowngraderScreen(
     state: DowngraderUiState,
     onSelectChannel: (FirmwareChannel) -> Unit,
+    onUseAutoChannel: () -> Unit,
     onOplusModelChange: (String) -> Unit,
     onQueryOplus: () -> Unit,
     onCopyOplusUrl: (String) -> Unit,
@@ -104,6 +105,8 @@ fun DowngraderScreen(
     var showAbout by rememberSaveable { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
+    // 切换通道、重新查询时整块重新入场，避免「只有第一次有动画」
+    val motionKey = state.channel to state.motionEpoch
     val busy = state.isLoadingDevice || state.isQuerying ||
         state.isDownloadingFirmware || state.isQueryingOplus
     val collapseTarget by remember {
@@ -142,10 +145,11 @@ fun DowngraderScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    revealItem(key = "header", order = 0) {
+                    revealItem(key = "header", order = 0, replayKey = motionKey) {
                         Header(
                             busy = busy,
                             channel = state.channel,
+                            channelAuto = state.isChannelAuto,
                             onAbout = { showAbout = true },
                         )
                     }
@@ -153,6 +157,7 @@ fun DowngraderScreen(
                     if (state.channel == FirmwareChannel.OPLUS) {
                         oplusContent(
                             state = state,
+                            replayKey = motionKey,
                             onModelChange = onOplusModelChange,
                             onQuery = onQueryOplus,
                             onCopyUrl = onCopyOplusUrl,
@@ -160,15 +165,15 @@ fun DowngraderScreen(
                         )
                     } else {
 
-                    revealItem(key = "device.label", order = 1) {
+                    revealItem(key = "device.label", order = 1, replayKey = motionKey) {
                         SectionLabel(title = "设备信息", trailing = "本机")
                     }
 
-                    revealItem(key = "device.card", order = 1) {
+                    revealItem(key = "device.card", order = 1, replayKey = motionKey) {
                         DeviceCard(state = state)
                     }
 
-                    revealItem(key = "credential.label", order = 2) {
+                    revealItem(key = "credential.label", order = 2, replayKey = motionKey) {
                         SectionLabel(
                             title = "降级凭据",
                             trailing = if (state.credentialAvailable) "已就绪" else "缺失",
@@ -176,11 +181,11 @@ fun DowngraderScreen(
                         )
                     }
 
-                    revealItem(key = "credential.card", order = 2) {
+                    revealItem(key = "credential.card", order = 2, replayKey = motionKey) {
                         CredentialCard(state = state)
                     }
 
-                    revealItem(key = "query.action", order = 3) {
+                    revealItem(key = "query.action", order = 3, replayKey = motionKey) {
                         GlassButton(
                             title = if (state.isQuerying) "正在查询降级包" else "查询可用降级包",
                             subtitle = "vivo 官方升级服务",
@@ -191,7 +196,7 @@ fun DowngraderScreen(
                     }
 
                     state.queryError?.let { error ->
-                        revealItem(key = "query.error", order = 3) {
+                        revealItem(key = "query.error", order = 3, replayKey = motionKey) {
                             GlassErrorNote(
                                 title = "查询失败",
                                 message = queryErrorMessage(error),
@@ -200,10 +205,10 @@ fun DowngraderScreen(
                     }
 
                     state.firmware?.let { firmware ->
-                        revealItem(key = "firmware.label", order = 4) {
+                        revealItem(key = "firmware.label", order = 4, replayKey = motionKey) {
                             SectionLabel(title = "可用降级包", trailing = "已获取")
                         }
-                        revealItem(key = "firmware.card", order = 4) {
+                        revealItem(key = "firmware.card", order = 4, replayKey = motionKey) {
                             FirmwareCard(
                                 state = state,
                                 firmware = firmware,
@@ -217,7 +222,7 @@ fun DowngraderScreen(
                     }
 
                     if (state.isDownloadingFirmware && state.firmware == null) {
-                        revealItem(key = "download.standalone", order = 5) {
+                        revealItem(key = "download.standalone", order = 5, replayKey = motionKey) {
                             GlassCard {
                                 DownloadProgressBlock(
                                     state = state,
@@ -228,7 +233,7 @@ fun DowngraderScreen(
                     }
 
                     if (state.firmware != null) {
-                        revealItem(key = "guide.card", order = 5) {
+                        revealItem(key = "guide.card", order = 5, replayKey = motionKey) {
                             GuideCard(
                                 expanded = guideExpanded,
                                 onToggle = { guideExpanded = !guideExpanded },
@@ -239,18 +244,22 @@ fun DowngraderScreen(
 
                     }
 
-                    revealItem(key = "channel.label", order = 6) {
-                        SectionLabel(title = "查询通道", trailing = state.channel.label)
-                    }
-
-                    revealItem(key = "channel.switcher", order = 7) {
-                        ChannelBlock(
-                            current = state.channel,
-                            onSelect = onSelectChannel,
+                    revealItem(key = "channel.label", order = 6, replayKey = motionKey) {
+                        SectionLabel(
+                            title = "查询通道",
+                            trailing = if (state.isChannelAuto) "自动识别" else "手动指定",
                         )
                     }
 
-                    revealItem(key = "footer", order = 8) {
+                    revealItem(key = "channel.switcher", order = 7, replayKey = motionKey) {
+                        ChannelBlock(
+                            state = state,
+                            onSelect = onSelectChannel,
+                            onUseAuto = onUseAutoChannel,
+                        )
+                    }
+
+                    revealItem(key = "footer", order = 8, replayKey = motionKey) {
                         Footer(channel = state.channel)
                     }
                 }
@@ -312,12 +321,46 @@ private fun MiniTopBar(
 
 @Composable
 private fun ChannelBlock(
-    current: FirmwareChannel,
+    state: DowngraderUiState,
     onSelect: (FirmwareChannel) -> Unit,
+    onUseAuto: () -> Unit,
 ) {
     val p = Glass.palette
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val detection = state.detection
+
     GlassCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)) {
-        ChannelSwitcher(current = current, onSelect = onSelect)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = when {
+                        state.isDetectingBrand -> "正在识别机型…"
+                        detection.isRecognized -> "${detection.brandLabel} · ${state.channel.label}"
+                        else -> "未识别机型 · 按 vivo 查询"
+                    },
+                    style = Glass.headline(17f, p.text, FontWeight.SemiBold),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(5.dp))
+                Text(
+                    text = detection.basis,
+                    style = Glass.label(11.5f, p.textMute),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            if (state.isDetectingBrand) {
+                Spinner()
+            } else {
+                StatusPill(
+                    text = if (state.isChannelAuto) "自动" else "手动",
+                    active = state.isChannelAuto,
+                )
+            }
+        }
+
         Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -326,13 +369,40 @@ private fun ChannelBlock(
                     .background(p.accent, CircleShape),
             )
             Spacer(Modifier.width(8.dp))
-            Text(channelHint(current), style = Glass.label(12f, p.textDim))
+            Text(channelHint(state.channel), style = Glass.label(12f, p.textDim))
         }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = "左右滑动胶囊也能切换",
-            style = Glass.label(11.5f, p.textMute),
-        )
+
+        Spacer(Modifier.height(14.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SmallGlassButton(
+                title = if (expanded) "收起切换" else "识别不对？手动指定",
+                onClick = { expanded = !expanded },
+            )
+            if (!state.isChannelAuto) {
+                Spacer(Modifier.width(8.dp))
+                SmallGlassButton(
+                    title = "恢复自动识别",
+                    tint = p.accent,
+                    onClick = onUseAuto,
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(tween(220)) + expandVertically(tween(240)),
+            exit = fadeOut(tween(160)) + shrinkVertically(tween(200)),
+        ) {
+            Column {
+                Spacer(Modifier.height(14.dp))
+                ChannelSwitcher(current = state.channel, onSelect = onSelect)
+                Spacer(Modifier.height(9.dp))
+                Text(
+                    text = "手动选定后会一直用这条通道，不再自动切换；也可以左右滑动胶囊来切。",
+                    style = Glass.label(11.5f, p.textMute),
+                )
+            }
+        }
     }
 }
 
@@ -342,7 +412,12 @@ private fun channelHint(channel: FirmwareChannel): String = when (channel) {
 }
 
 @Composable
-private fun Header(busy: Boolean, channel: FirmwareChannel, onAbout: () -> Unit) {
+private fun Header(
+    busy: Boolean,
+    channel: FirmwareChannel,
+    channelAuto: Boolean,
+    onAbout: () -> Unit,
+) {
     val p = Glass.palette
     Row(
         modifier = Modifier
@@ -358,7 +433,7 @@ private fun Header(busy: Boolean, channel: FirmwareChannel, onAbout: () -> Unit)
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "${channel.label} 通道 · 查询 · 下载 · 校验",
+                text = "${channel.label} 通道 · ${if (channelAuto) "机型自动识别" else "手动指定"} · 查询 · 下载 · 校验",
                 style = Glass.label(12.5f, p.textMute, FontWeight.Medium),
                 maxLines = 1,
             )

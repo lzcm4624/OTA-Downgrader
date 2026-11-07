@@ -150,25 +150,26 @@ fun ChannelSwitcher(
 /** 欧加真整块内容：设备、机型输入、查询、结果列表。 */
 fun LazyListScope.oplusContent(
     state: DowngraderUiState,
+    replayKey: Any? = Unit,
     onModelChange: (String) -> Unit,
     onQuery: () -> Unit,
     onCopyUrl: (String) -> Unit,
     onOpenUrl: (String) -> Unit,
 ) {
-    revealItem(key = "oplus.device.label", order = 0) {
+    revealItem(key = "oplus.device.label", order = 0, replayKey = replayKey) {
         SectionLabel(
             title = "设备信息",
             trailing = state.oplusDevice?.brand?.label ?: "未识别",
         )
     }
-    revealItem(key = "oplus.device.card", order = 1) {
+    revealItem(key = "oplus.device.card", order = 1, replayKey = replayKey) {
         OplusDeviceCard(state = state)
     }
 
-    revealItem(key = "oplus.model.label", order = 2) {
+    revealItem(key = "oplus.model.label", order = 2, replayKey = replayKey) {
         SectionLabel(title = "机型代号", trailing = "可手动输入")
     }
-    revealItem(key = "oplus.model.card", order = 3) {
+    revealItem(key = "oplus.model.card", order = 3, replayKey = replayKey) {
         GlassCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp)) {
             ModelInputField(
                 value = state.oplusModelInput,
@@ -183,7 +184,7 @@ fun LazyListScope.oplusContent(
         }
     }
 
-    revealItem(key = "oplus.query.action", order = 4) {
+    revealItem(key = "oplus.query.action", order = 4, replayKey = replayKey) {
         GlassButton(
             title = when {
                 state.isQueryingOplus -> state.oplusStage.ifBlank { "正在查询" }
@@ -197,14 +198,14 @@ fun LazyListScope.oplusContent(
     }
 
     state.oplusQueryError?.let { error ->
-        revealItem(key = "oplus.error", order = 4) {
+        revealItem(key = "oplus.error", order = 4, replayKey = replayKey) {
             GlassErrorNote(title = "查询失败", message = oplusErrorMessage(error))
         }
     }
 
     val afterSale = state.oplusAfterSalePackages
     if (afterSale.isNotEmpty()) {
-        revealItem(key = "oplus.aftersale.label", order = 5) {
+        revealItem(key = "oplus.aftersale.label", order = 5, replayKey = replayKey) {
             SectionLabel(title = "售后降级包", trailing = "${afterSale.size} 个")
         }
         afterSale.forEachIndexed { index, firmware ->
@@ -220,7 +221,7 @@ fun LazyListScope.oplusContent(
 
     val official = state.oplusOfficialPackages
     if (official.isNotEmpty()) {
-        revealItem(key = "oplus.official.label", order = 5) {
+        revealItem(key = "oplus.official.label", order = 5, replayKey = replayKey) {
             SectionLabel(title = "官方版本链", trailing = "${official.size} 个版本")
         }
         official.forEachIndexed { index, firmware ->
@@ -236,7 +237,7 @@ fun LazyListScope.oplusContent(
     }
 
     if (state.oplusQueried && state.oplusQueryError == null && state.oplusPackages.isEmpty()) {
-        revealItem(key = "oplus.empty", order = 5) {
+        revealItem(key = "oplus.empty", order = 5, replayKey = replayKey) {
             GlassCard {
                 Text(
                     text = "这个代号没查到可用的包。确认代号写对了（不是市场名），或者换一个分支再试。",
@@ -247,7 +248,7 @@ fun LazyListScope.oplusContent(
     }
 
     if (state.oplusPackages.isNotEmpty()) {
-        revealItem(key = "oplus.tip", order = 6) {
+        revealItem(key = "oplus.tip", order = 6, replayKey = replayKey) {
             GlassCard(tint = null, contentPadding = PaddingValues(horizontal = 18.dp, vertical = 15.dp)) {
                 Text(
                     text = "整包动辄 8-11 GB，手机上下载容易断，建议复制直链到电脑用下载工具拉。官方 OTA 直链有时效，过期重查一次即可；售后降级包直链长期有效。跨 Android 大版本往回刷会触发防回滚（ARB），刷之前确认目标版本的 ARB 等级不高于当前，否则可能变砖。",

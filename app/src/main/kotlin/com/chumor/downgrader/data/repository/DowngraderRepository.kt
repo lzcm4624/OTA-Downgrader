@@ -4,6 +4,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.chumor.downgrader.data.device.DeviceBrandDetector
 import com.chumor.downgrader.data.device.DevicePropertiesReader
 import com.chumor.downgrader.data.device.OplusDeviceReader
 import com.chumor.downgrader.data.remote.ColorosDowngradeApi
@@ -17,6 +18,7 @@ import com.chumor.downgrader.data.storage.FIRMWARE_DOWNLOAD_VERIFYING
 import com.chumor.downgrader.data.storage.FIRMWARE_DOWNLOAD_WORK_NAME
 import com.chumor.downgrader.data.storage.FirmwareDownloadWorker
 import com.chumor.downgrader.data.storage.firmwareDownloadInputData
+import com.chumor.downgrader.domain.model.DeviceBrandDetection
 import com.chumor.downgrader.domain.model.DeviceReadResult
 import com.chumor.downgrader.domain.model.FirmwareDownloadState
 import com.chumor.downgrader.domain.model.FirmwareDownloadStatus
@@ -35,6 +37,7 @@ import kotlinx.coroutines.withContext
 
 class DowngraderRepository(
     private val devicePropertiesReader: DevicePropertiesReader,
+    private val deviceBrandDetector: DeviceBrandDetector,
     private val vivoUpgradeApi: VivoUpgradeApi,
     private val oplusDeviceReader: OplusDeviceReader,
     private val oplusOtaApi: OplusOtaApi,
@@ -77,6 +80,11 @@ class DowngraderRepository(
 
     suspend fun queryPackage(credential: String): FirmwarePackage = withContext(ioDispatcher) {
         vivoUpgradeApi.query(credential)
+    }
+
+    /** 自动识别本机该走哪条通道（vivo / 欧加真）。 */
+    suspend fun detectBrand(): DeviceBrandDetection = withContext(ioDispatcher) {
+        deviceBrandDetector.detect()
     }
 
     suspend fun readOplusDevice(): OplusDeviceInfo = withContext(ioDispatcher) {

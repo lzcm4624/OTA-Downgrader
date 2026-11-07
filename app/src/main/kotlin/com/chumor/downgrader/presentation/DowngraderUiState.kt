@@ -1,6 +1,7 @@
 package com.chumor.downgrader.presentation
 
 import androidx.compose.runtime.Immutable
+import com.chumor.downgrader.domain.model.DeviceBrandDetection
 import com.chumor.downgrader.domain.model.DeviceInfo
 import com.chumor.downgrader.domain.model.DeviceReadError
 import com.chumor.downgrader.domain.model.FirmwareDownloadState
@@ -10,6 +11,7 @@ import com.chumor.downgrader.domain.model.OplusFirmware
 import com.chumor.downgrader.domain.model.OplusQueryError
 import com.chumor.downgrader.domain.model.OplusSource
 import com.chumor.downgrader.domain.model.QueryError
+import com.chumor.downgrader.domain.model.DetectedVendor
 import com.chumor.downgrader.domain.model.isSha256Digest
 
 /** 界面上并列的两条通道：vivo 官方降级，与欧加真（OPPO / 一加 / 真我）。 */
@@ -21,6 +23,13 @@ enum class FirmwareChannel(val label: String) {
 @Immutable
 data class DowngraderUiState(
     val channel: FirmwareChannel = FirmwareChannel.VIVO,
+    /** 自动识别结果；界面上的通道默认由它决定。 */
+    val detection: DeviceBrandDetection = DeviceBrandDetection.EMPTY,
+    val isDetectingBrand: Boolean = true,
+    /** 用户手动指定过通道，之后不再被自动识别覆盖。 */
+    val channelManual: Boolean = false,
+    /** 每次发起查询 +1，界面拿它当入场动画的重播信号。 */
+    val motionEpoch: Int = 0,
     val oplusDevice: OplusDeviceInfo? = null,
     val oplusModelInput: String = "",
     val isQueryingOplus: Boolean = false,
@@ -40,6 +49,16 @@ data class DowngraderUiState(
     val firmware: FirmwarePackage? = null,
     val queryError: QueryError? = null,
 ) {
+    /** 自动识别推出来的通道；识别不到时按 vivo 走。 */
+    val autoChannel: FirmwareChannel
+        get() = when (detection.vendor) {
+            DetectedVendor.OPLUS -> FirmwareChannel.OPLUS
+            else -> FirmwareChannel.VIVO
+        }
+
+    val isChannelAuto: Boolean
+        get() = !channelManual
+
     val isDownloadingFirmware: Boolean
         get() = firmwareDownload.status.isActive
 

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.WorkManager
+import com.chumor.downgrader.data.device.DeviceBrandDetector
 import com.chumor.downgrader.data.device.DevicePropertiesReader
 import com.chumor.downgrader.data.device.OplusDeviceReader
 import com.chumor.downgrader.data.remote.ColorosDowngradeApi
@@ -24,6 +25,7 @@ class DowngraderViewModelFactory(context: Context) : ViewModelProvider.Factory {
         return DowngraderViewModel(
             repository = DowngraderRepository(
                 devicePropertiesReader = DevicePropertiesReader(),
+                deviceBrandDetector = DeviceBrandDetector(),
                 vivoUpgradeApi = VivoUpgradeApi(),
                 oplusDeviceReader = OplusDeviceReader(),
                 oplusOtaApi = OplusOtaApi(),

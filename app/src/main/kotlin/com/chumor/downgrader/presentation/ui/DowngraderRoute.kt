@@ -148,6 +148,7 @@ internal fun DowngraderRoute(viewModel: DowngraderViewModel, modifier: Modifier 
         modifier = modifier,
         state = state,
         onSelectChannel = viewModel::selectChannel,
+        onUseAutoChannel = viewModel::useAutoChannel,
         onOplusModelChange = viewModel::updateOplusModel,
         onQueryOplus = viewModel::queryOplus,
         onCopyOplusUrl = { url ->
