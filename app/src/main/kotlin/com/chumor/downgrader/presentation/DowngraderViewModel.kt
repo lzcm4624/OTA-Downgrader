@@ -6,6 +6,9 @@ import com.chumor.downgrader.data.repository.DowngraderRepository
 import com.chumor.downgrader.domain.model.DeviceReadError
 import com.chumor.downgrader.domain.model.DeviceReadException
 import com.chumor.downgrader.domain.model.FirmwareDownloadStatus
+import com.chumor.downgrader.domain.model.OplusBrand
+import com.chumor.downgrader.domain.model.OplusQueryError
+import com.chumor.downgrader.domain.model.OplusQueryException
 import com.chumor.downgrader.domain.model.QueryError
 import com.chumor.downgrader.domain.model.QueryException
 import kotlinx.coroutines.CancellationException
@@ -46,6 +49,113 @@ class DowngraderViewModel(
             }
         }
         loadDevice()
+        loadOplusDevice()
+    }
+
+    /** 读欧加真设备信息；识别为自家机型时自动切到欧加通道。 */
+    private fun loadOplusDevice() {
+        viewModelScope.launch {
+            val device = try {
+                repository.readOplusDevice()
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
+            } ?: return@launch
+
+            mutableState.update { current ->
+                current.copy(
+                    oplusDevice = device,
+                    oplusModelInput = current.oplusModelInput.ifBlank { device.code },
+                    channel = if (device.brand != OplusBrand.UNKNOWN) {
+                        FirmwareChannel.OPLUS
+                    } else {
+                        current.channel
+                    },
+                )
+            }
+        }
+    }
+
+    fun selectChannel(channel: FirmwareChannel) {
+        mutableState.update { it.copy(channel = channel) }
+    }
+
+    fun updateOplusModel(value: String) {
+        mutableState.update { it.copy(oplusModelInput = value.uppercase()) }
+    }
+
+    /**
+     * 欧加真查询：先从官方 OTA 顺版本链回溯（拿全部历史版本），
+     * 再用链上取到的项目号查售后降级包。两段分开上报，界面能看到进展。
+     */
+    fun queryOplus() {
+        val current = mutableState.value
+        if (!current.canQueryOplus) return
+
+        val model = current.oplusModelInput.trim().uppercase()
+        mutableState.update {
+            it.copy(
+                isQueryingOplus = true,
+                oplusPackages = emptyList(),
+                oplusProjectNumber = null,
+                oplusQueryError = null,
+                oplusQueried = false,
+                oplusStage = "正在回溯官方版本链",
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                val official = repository.queryOplusOfficial(model, current.oplusDevice?.otaVersion)
+                mutableState.update {
+                    it.copy(
+                        oplusPackages = official.packages,
+                        oplusProjectNumber = official.projectNumber,
+                        oplusStage = if (official.projectNumber != null) "正在查询售后降级包" else "",
+                    )
+                }
+
+                val afterSale = official.projectNumber?.let { project ->
+                    try {
+                        repository.queryOplusAfterSale(model, project)
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                }.orEmpty()
+
+                mutableState.update {
+                    it.copy(
+                        oplusPackages = it.oplusPackages + afterSale,
+                        isQueryingOplus = false,
+                        oplusStage = "",
+                        oplusQueried = true,
+                    )
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: OplusQueryException) {
+                mutableState.update {
+                    it.copy(
+                        isQueryingOplus = false,
+                        oplusQueryError = exception.error,
+                        oplusStage = "",
+                        oplusQueried = true,
+                    )
+                }
+            } catch (_: Exception) {
+                mutableState.update {
+                    it.copy(
+                        isQueryingOplus = false,
+                        oplusQueryError = OplusQueryError.Unexpected,
+                        oplusStage = "",
+                        oplusQueried = true,
+                    )
+                }
+            }
+        }
     }
 
     override fun onCleared() {

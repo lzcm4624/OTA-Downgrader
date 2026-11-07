@@ -36,8 +36,8 @@ android {
         applicationId = "com.chumor.downgrader"
         minSdk = 26
         targetSdk = 36
-        versionCode = gitCommitCount.get()
-        versionName = "1.0.0"
+        versionCode = gitCommitCount.get() + 1
+        versionName = "1.2.0"
 
         ndk {
             abiFilters += "arm64-v8a"

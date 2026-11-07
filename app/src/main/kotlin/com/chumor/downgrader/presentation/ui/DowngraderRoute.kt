@@ -147,6 +147,26 @@ internal fun DowngraderRoute(viewModel: DowngraderViewModel, modifier: Modifier 
     DowngraderScreen(
         modifier = modifier,
         state = state,
+        onSelectChannel = viewModel::selectChannel,
+        onOplusModelChange = viewModel::updateOplusModel,
+        onQueryOplus = viewModel::queryOplus,
+        onCopyOplusUrl = { url ->
+            copyText(
+                context,
+                url,
+                context.getString(R.string.firmware_download_url),
+                context.getString(R.string.firmware_url_copied),
+            )
+        },
+        onOpenOplusUrl = { url ->
+            if (url.isNotBlank()) {
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                } catch (_: Exception) {
+                    Toast.makeText(context, "没有可用的浏览器", Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
         onQueryPackage = viewModel::queryPackage,
         onSaveCertificate = {
             withDownloadAccess(PendingDownloadAccessAction.SaveCertificate)

@@ -3,7 +3,7 @@
     <string name="about_license">Released under GPL-3.0</string>
     <string name="about_title">About</string>
     <string name="about_version" translatable="false">%1$s (%2$d)</string>
-    <string name="app_name" translatable="false">Downgrader</string>
+    <string name="app_name">降级助手</string>
     <string name="certificate_copied">dota_sig copied</string>
     <string name="certificate_copy">Copy dota_sig</string>
     <string name="certificate_save">Save dota_sig</string>

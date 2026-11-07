@@ -5,6 +5,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.chumor.downgrader.data.device.DevicePropertiesReader
+import com.chumor.downgrader.data.device.OplusDeviceReader
+import com.chumor.downgrader.data.remote.ColorosDowngradeApi
+import com.chumor.downgrader.data.remote.OplusOtaApi
 import com.chumor.downgrader.data.remote.VivoUpgradeApi
 import com.chumor.downgrader.data.storage.CertificateSaver
 import com.chumor.downgrader.data.storage.FIRMWARE_DOWNLOAD_EXPECTED_SIZE_BYTES
@@ -18,6 +21,10 @@ import com.chumor.downgrader.domain.model.DeviceReadResult
 import com.chumor.downgrader.domain.model.FirmwareDownloadState
 import com.chumor.downgrader.domain.model.FirmwareDownloadStatus
 import com.chumor.downgrader.domain.model.FirmwarePackage
+import com.chumor.downgrader.domain.model.OplusDeviceInfo
+import com.chumor.downgrader.domain.model.OplusFirmware
+import com.chumor.downgrader.domain.model.OplusQueryException
+import com.chumor.downgrader.domain.model.OplusQueryResult
 import com.chumor.downgrader.domain.model.downloadFileName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +36,9 @@ import kotlinx.coroutines.withContext
 class DowngraderRepository(
     private val devicePropertiesReader: DevicePropertiesReader,
     private val vivoUpgradeApi: VivoUpgradeApi,
+    private val oplusDeviceReader: OplusDeviceReader,
+    private val oplusOtaApi: OplusOtaApi,
+    private val colorosDowngradeApi: ColorosDowngradeApi,
     private val certificateSaver: CertificateSaver,
     private val workManager: WorkManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -68,6 +78,22 @@ class DowngraderRepository(
     suspend fun queryPackage(credential: String): FirmwarePackage = withContext(ioDispatcher) {
         vivoUpgradeApi.query(credential)
     }
+
+    suspend fun readOplusDevice(): OplusDeviceInfo = withContext(ioDispatcher) {
+        oplusDeviceReader.read()
+    }
+
+    /** 官方 OTA 版本链回溯：拿到的每个版本都是可以降级回去的完整包。 */
+    suspend fun queryOplusOfficial(model: String, otaVersion: String?): OplusQueryResult =
+        withContext(ioDispatcher) {
+            oplusOtaApi.query(model, otaVersion)
+        }
+
+    /** 售后（降级 / 维修）全量包；失败不影响官方结果，交给上层各自处理。 */
+    suspend fun queryOplusAfterSale(model: String, projectNumber: String): List<OplusFirmware> =
+        withContext(ioDispatcher) {
+            colorosDowngradeApi.query(model, projectNumber)
+        }
 
     suspend fun saveCertificate(certificate: String): String = withContext(ioDispatcher) {
         certificateSaver.save(certificate)
