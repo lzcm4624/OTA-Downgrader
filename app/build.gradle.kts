@@ -39,7 +39,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = gitCommitCount.get() + 1
-        versionName = "1.5.1"
+        versionName = "1.5.2"
 
         ndk {
             abiFilters += "arm64-v8a"
@@ -96,9 +96,10 @@ kotlin {
 }
 
 dependencies {
-    implementation(libs.miuix.ui.android)
-    implementation(libs.miuix.blur.android)
-    implementation(libs.miuix.icons.android)
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.animation)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

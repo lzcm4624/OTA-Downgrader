@@ -9,9 +9,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chumor.downgrader.presentation.DowngraderViewModel
 import com.chumor.downgrader.presentation.DowngraderViewModelFactory
 import com.chumor.downgrader.presentation.ui.DowngraderRoute
-import top.yukonga.miuix.kmp.theme.ColorSchemeMode
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.ThemeController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,11 +18,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val factory = remember { DowngraderViewModelFactory(applicationContext) }
             val viewModel: DowngraderViewModel = viewModel(factory = factory)
-            val themeController = remember { ThemeController(ColorSchemeMode.System) }
 
-            MiuixTheme(controller = themeController) {
-                DowngraderRoute(viewModel = viewModel)
-            }
+            DowngraderRoute(viewModel = viewModel)
         }
     }
 }

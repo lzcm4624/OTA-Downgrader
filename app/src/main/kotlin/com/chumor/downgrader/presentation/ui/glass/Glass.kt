@@ -275,19 +275,44 @@ object Glass {
         @Composable get() = LocalGlassPalette.current
 
     fun title(size: Float = 28f, color: Color = Color.Unspecified, weight: FontWeight = FontWeight.Bold): TextStyle =
-        TextStyle(fontSize = size.sp, fontWeight = weight, letterSpacing = (-0.4).sp, lineHeight = (size * 1.18f).sp)
+        TextStyle(
+            color = color,
+            fontSize = size.sp,
+            fontWeight = weight,
+            letterSpacing = (-0.4).sp,
+            lineHeight = (size * 1.18f).sp,
+        )
 
     fun headline(size: Float = 17f, color: Color = Color.Unspecified, weight: FontWeight = FontWeight.SemiBold): TextStyle =
-        TextStyle(fontSize = size.sp, fontWeight = weight, letterSpacing = (-0.2).sp, lineHeight = (size * 1.32f).sp)
+        TextStyle(
+            color = color,
+            fontSize = size.sp,
+            fontWeight = weight,
+            letterSpacing = (-0.2).sp,
+            lineHeight = (size * 1.32f).sp,
+        )
 
     fun body(size: Float = 14.5f, color: Color = Color.Unspecified, weight: FontWeight = FontWeight.Normal): TextStyle =
-        TextStyle(fontSize = size.sp, fontWeight = weight, letterSpacing = 0.sp, lineHeight = (size * 1.45f).sp)
+        TextStyle(
+            color = color,
+            fontSize = size.sp,
+            fontWeight = weight,
+            letterSpacing = 0.sp,
+            lineHeight = (size * 1.45f).sp,
+        )
 
     fun label(size: Float = 12f, color: Color = Color.Unspecified, weight: FontWeight = FontWeight.Medium): TextStyle =
-        TextStyle(fontSize = size.sp, fontWeight = weight, letterSpacing = 0.1.sp, lineHeight = (size * 1.35f).sp)
+        TextStyle(
+            color = color,
+            fontSize = size.sp,
+            fontWeight = weight,
+            letterSpacing = 0.1.sp,
+            lineHeight = (size * 1.35f).sp,
+        )
 
     fun mono(size: Float = 12f, color: Color = Color.Unspecified, weight: FontWeight = FontWeight.Normal): TextStyle =
         TextStyle(
+            color = color,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
             fontSize = size.sp,
             fontWeight = weight,
@@ -298,7 +323,9 @@ object Glass {
 
 
 /**
- * Minimal text primitive (the project does not depend on material3).
+ * Minimal text primitive (the project does not depend on material3 or any design library).
+ * Default color comes from the glass palette, so the app renders correctly in both themes
+ * without an external theme wrapper.
  */
 @Composable
 fun Text(
@@ -309,10 +336,13 @@ fun Text(
     overflow: TextOverflow = TextOverflow.Clip,
     textAlign: TextAlign? = null,
 ) {
+    val palette = LocalGlassPalette.current
+    val base = if (textAlign != null) style.copy(textAlign = textAlign) else style
+    val resolved = if (base.color == Color.Unspecified) base.copy(color = palette.text) else base
     BasicText(
         text = text,
         modifier = modifier,
-        style = if (textAlign != null) style.copy(textAlign = textAlign) else style,
+        style = resolved,
         maxLines = maxLines,
         overflow = overflow,
     )

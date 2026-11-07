@@ -5,7 +5,7 @@
 安卓 OTA 降级包查询工具，双通道支持 vivo / iQOO 与 OPPO / 一加 / 真我。
 不用到处翻论坛帖子和网盘链接，打开就能看到本机有哪些官方降级包可下。
 
-> 当前版本 v1.5.0 · 遵循 GPL-3.0 · 基于 [Chumor/Downgrader](https://github.com/Chumor/Downgrader) 二次开发
+> 当前版本 v1.5.2 · 遵循 GPL-3.0 · 基于 [Chumor/Downgrader](https://github.com/Chumor/Downgrader) 二次开发
 
 ---
 
@@ -28,14 +28,17 @@
 
 液态玻璃风格：卡片边缘是流动的液态玻璃，颜色沿边缘缓慢行走（蓝 → 紫 → 青 → 粉），背后透出随时间变色的光斑，列表入场 / 滚动 / 加载都有动效，跟随系统深浅色。
 
+界面为项目内自绘（`presentation/ui/glass/`），卡片、按钮、输入框、弹窗、进度条全部是自己画的 Compose 组件，不套用任何第三方 UI 设计体系。
+
 ## 技术栈
 
 | 层 | 用了什么 |
 |---|---|
 | 语言 | Kotlin |
-| UI | Jetpack Compose · [Miuix](https://github.com/compose-miuix-ui/miuix) 设计组件 |
+| UI | Jetpack Compose（自绘液态玻璃组件，无第三方设计库） |
 | 构建 | Gradle 9 · AGP · minSdk 26 / targetSdk 36 / compileSdk 37 |
 | 架构 | 单 Activity + Compose，domain / data / presentation 分层 |
+| 主题 | 自建调色板（暗 / 亮两套），跟随系统深浅色 |
 
 ## 编译
 
@@ -73,5 +76,4 @@ export KEY_PASSWORD=******
 ## 致谢
 
 - [Chumor/Downgrader](https://github.com/Chumor/Downgrader) — 原项目
-- [Miuix](https://github.com/compose-miuix-ui/miuix)
 - [Payload Extract GUI](https://github.com/YuKongA/payload_extract_gui)
