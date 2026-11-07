@@ -6,11 +6,13 @@ plugins {
 val gitCommitCount = providers.exec {
     workingDir(rootProject.projectDir)
     commandLine("git", "rev-list", "--count", "HEAD")
-}.standardOutput.asText.map { it.trim().toInt() }
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim().toIntOrNull() ?: 0 }
 val gitCommitHash = providers.exec {
     workingDir(rootProject.projectDir)
     commandLine("git", "rev-parse", "--short=7", "HEAD")
-}.standardOutput.asText.map { it.trim() }
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim().ifEmpty { "nogit" } }
 
 val releaseStoreFilePath = System.getenv("KEYSTORE_PATH")
 val releaseStorePassword = System.getenv("KEYSTORE_PASSWORD")
