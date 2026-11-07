@@ -38,19 +38,25 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # 运行器自带 Android SDK，但默认只有最近的稳定平台；compileSdk = 37 需要单独装
       - name: Install SDK 37
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" || \
-          sdkmanager --install "platforms;android-37" "build-tools;37.0.0"
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          echo "SDK_ROOT=$SDK_ROOT"
+          SDKMGR="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMGR" ]; then
+            SDKMGR="$(ls -d "$SDK_ROOT"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | tail -n1)"
+          fi
+          echo "sdkmanager=$SDKMGR"
+          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
+          "$SDKMGR" --install "platforms;android-37.0" "build-tools;37.0.0"
+          echo "--- installed platforms ---"
+          ls "$SDK_ROOT/platforms"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # 配了签名密钥就用正式签名；没配就用调试签名，保证能出包
+      # 配了签名密钥就用正式签名；没配就用调试签名，保证出来的包能装
       - name: Decode signing key
         if: env.KEYSTORE_BASE64 != ''
         run: echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
@@ -66,6 +72,15 @@ jobs:
         run: ./gradlew --no-daemon :app:assembleRelease
         env:
           KEYSTORE_PATH: ""
+
+      - name: Rename APK
+        run: |
+          cd app/build/outputs/apk/release
+          for f in *.apk; do
+            [ -e "$f" ] || continue
+            mv "$f" "OTA-Downgrader-${{ github.run_number }}.apk"
+          done
+          ls -l
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

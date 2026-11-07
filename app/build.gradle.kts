@@ -61,6 +61,9 @@ android {
         release {
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
+            } else {
+                // CI 里没配签名密钥时退到调试签名，至少保证出来的 APK 能装
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
